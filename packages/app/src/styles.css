@@ -3195,9 +3195,11 @@
     @apply z-10;
   }
 
-  /* "+" entre colunas: mesmo formato do "−", sem o destaque vermelho. */
+  /* "+" entre colunas: mesmo formato do "−", sem o destaque vermelho.
+     Fica na borda inferior do cabeçalho e um pouco menor, para não encostar
+     no "−" (borda superior) nem na barra da tabela em colunas estreitas. */
   .markdown-paper .markra-table-insert-control {
-    @apply z-10;
+    @apply z-10 size-5;
     transform: translate(-50%, -50%);
   }
 

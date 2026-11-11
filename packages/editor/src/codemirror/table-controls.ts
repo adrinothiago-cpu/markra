@@ -288,14 +288,14 @@ export function createTableControls(wrapper: HTMLElement, table: HTMLTableElemen
       if (insertColumn) {
         insertColumn.hidden = false;
         insertColumn.style.left = `${rect.right - bounds.left}px`;
-        insertColumn.style.top = `${rect.top - bounds.top}px`;
+        insertColumn.style.top = `${rect.bottom - bounds.top}px`;
       }
       if (insertFirstColumn) {
         // Só a primeira coluna tem borda esquerda sem vizinha; nas demais,
         // o "+" da direita da coluna anterior já cobre essa posição.
         insertFirstColumn.hidden = position.column !== 0;
         insertFirstColumn.style.left = `${rect.left - bounds.left}px`;
-        insertFirstColumn.style.top = `${rect.top - bounds.top}px`;
+        insertFirstColumn.style.top = `${rect.bottom - bounds.top}px`;
       }
     } else {
       hoveredRow = position.row;
