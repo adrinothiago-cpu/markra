@@ -3195,6 +3195,12 @@
     @apply z-10;
   }
 
+  /* "+" entre colunas: mesmo formato do "−", sem o destaque vermelho. */
+  .markdown-paper .markra-table-insert-control {
+    @apply z-10;
+    transform: translate(-50%, -50%);
+  }
+
   .markdown-paper .markra-table-align-controls {
     @apply absolute left-1.5 z-10 flex items-center gap-0.5;
     height: 24px;

@@ -139,6 +139,9 @@ export interface TableControlOptions {
   setWidthMode: (mode: TableWidthMode) => unknown;
   addRow: () => unknown;
   addColumn: () => unknown;
+  // Opcional: tabelas que suportam inserir coluna no meio mostram um "+"
+  // na borda direita da coluna sob o mouse, no mesmo padrão do "−".
+  insertColumnAfter?: (index: number) => unknown;
   deleteRow: (index: number) => unknown;
   deleteColumn: (index: number) => unknown;
   deleteTable: () => unknown;
@@ -258,8 +261,13 @@ export function createTableControls(wrapper: HTMLElement, table: HTMLTableElemen
   let hoveredColumn = 0, hoveredRow = 0;
   const deleteColumn = createTableControl(document, "markra-table-delete-control markra-table-delete-column", options.labels.deleteColumn, () => options.deleteColumn(hoveredColumn), createLucideIcon(document, Minus, "markra-table-control-icon"));
   const deleteRow = createTableControl(document, "markra-table-delete-control markra-table-delete-row", options.labels.deleteRow, () => options.deleteRow(hoveredRow), createLucideIcon(document, Minus, "markra-table-control-icon"));
+  const insertColumn = options.insertColumnAfter
+    ? createTableControl(document, "markra-table-insert-control markra-table-insert-column", options.labels.addColumnRight, () => options.insertColumnAfter?.(hoveredColumn), createLucideIcon(document, Plus, "markra-table-control-icon"))
+    : null;
   deleteColumn.hidden = true; deleteRow.hidden = true;
+  if (insertColumn) insertColumn.hidden = true;
   wrapper.prepend(toolbar); wrapper.append(column, row, deleteColumn, deleteRow);
+  if (insertColumn) wrapper.append(insertColumn);
   const hover = (event: MouseEvent) => {
     const cell = event.target instanceof Element ? event.target.closest<HTMLTableCellElement>("th, td") : null;
     if (!cell || cell.closest("table") !== table) return;
@@ -271,20 +279,30 @@ export function createTableControls(wrapper: HTMLElement, table: HTMLTableElemen
       deleteColumn.hidden = false; deleteRow.hidden = true;
       deleteColumn.style.left = `${rect.left - bounds.left + rect.width / 2}px`;
       deleteColumn.style.top = `${rect.top - bounds.top}px`;
+      if (insertColumn) {
+        insertColumn.hidden = false;
+        insertColumn.style.left = `${rect.right - bounds.left}px`;
+        insertColumn.style.top = `${rect.top - bounds.top}px`;
+      }
     } else {
       hoveredRow = position.row;
       const rect = cell.parentElement!.getBoundingClientRect();
       deleteColumn.hidden = true; deleteRow.hidden = false;
+      if (insertColumn) insertColumn.hidden = true;
       const visibleRight = wrapper.querySelector(".markra-table-scroll")?.getBoundingClientRect().right ?? rect.right;
       deleteRow.style.left = `${Math.min(rect.right, visibleRight) - bounds.left}px`;
       deleteRow.style.top = `${rect.top - bounds.top + rect.height / 2}px`;
     }
   };
-  const leave = () => { deleteColumn.hidden = true; deleteRow.hidden = true; };
+  const leave = () => {
+    deleteColumn.hidden = true; deleteRow.hidden = true;
+    if (insertColumn) insertColumn.hidden = true;
+  };
   wrapper.addEventListener("mousemove", hover); wrapper.addEventListener("mouseleave", leave);
   function update() {
     const readonly = options.readOnly();
     for (const button of [size, ...alignments, width, remove, column, row, deleteColumn, deleteRow]) button.disabled = readonly;
+    if (insertColumn) insertColumn.disabled = readonly;
     deleteColumn.disabled ||= options.shape().columns <= 1;
     const alignment = options.alignment();
     for (const button of alignments) button.ariaPressed = String(button.dataset.alignment === alignment);

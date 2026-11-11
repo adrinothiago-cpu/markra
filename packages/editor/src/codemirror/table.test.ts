@@ -2242,6 +2242,49 @@ describe("tablePreviewPlugin", () => {
     expect(view.state.doc.toString()).toContain("| ---: | ---: | ---: |");
   });
 
+  it("inserts a column after the hovered header and focuses its new header cell", async () => {
+    const doc = [
+      "| Name | Value |",
+      "| --- | :---: |",
+      "| Alpha | 1 |",
+      "",
+      "Edit",
+    ].join("\n");
+    const view = createView(doc);
+    const insert = () =>
+      view.dom.querySelector<HTMLButtonElement>(".markra-table-insert-column");
+
+    expect(insert()?.hidden).toBe(true);
+    view.dom.querySelector<HTMLTableCellElement>(
+      ".cm-markra-table th:first-child",
+    )?.dispatchEvent(new MouseEvent("mousemove", { bubbles: true }));
+    expect(insert()?.hidden).toBe(false);
+    expect(insert()?.getAttribute("aria-label")).toBe("Add column to the right");
+
+    view.dom.querySelector<HTMLTableCellElement>(
+      ".cm-markra-table tbody td:first-child",
+    )?.dispatchEvent(new MouseEvent("mousemove", { bubbles: true }));
+    expect(insert()?.hidden).toBe(true);
+
+    view.dom.querySelector<HTMLTableCellElement>(
+      ".cm-markra-table th:first-child",
+    )?.dispatchEvent(new MouseEvent("mousemove", { bubbles: true }));
+    insert()?.click();
+    await Promise.resolve();
+
+    const lines = view.state.doc.toString().split("\n");
+    expect(lines.slice(0, 3).map((line) => line.split("|").map((cell) => cell.trim()))).toEqual([
+      ["", "Name", "", "Value", ""],
+      ["", "---", "---", ":---:", ""],
+      ["", "Alpha", "", "1", ""],
+    ]);
+    expect(document.activeElement).toBe(
+      view.dom.querySelector<HTMLTableCellElement>(
+        ".cm-markra-table thead th:nth-child(2)",
+      ),
+    );
+  });
+
   it("deletes a selected preview row or column and focuses a nearby visual cell", async () => {
     const doc = [
       "| Name | Value | Extra |",

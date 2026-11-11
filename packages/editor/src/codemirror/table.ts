@@ -305,12 +305,16 @@ function addRow(view: CodeMirrorView, preview: TablePreview) {
   return changed;
 }
 
-function addColumn(view: CodeMirrorView, preview: TablePreview) {
+function addColumn(
+  view: CodeMirrorView,
+  preview: TablePreview,
+  insertAt = preview.header.length,
+) {
   const values = tableValues(preview);
-  const columnIndex = values.header.length;
-  values.header.push("");
-  values.alignments.push(null);
-  for (const row of values.rows) row.push("");
+  const columnIndex = Math.max(0, Math.min(insertAt, values.header.length));
+  values.header.splice(columnIndex, 0, "");
+  values.alignments.splice(columnIndex, 0, null);
+  for (const row of values.rows) row.splice(columnIndex, 0, "");
   const changed = replaceTable(
     view,
     preview,
@@ -1641,6 +1645,7 @@ class TableWidget extends WidgetType {
       },
       addRow: () => addRow(view, this.preview),
       addColumn: () => addColumn(view, this.preview),
+      insertColumnAfter: column => addColumn(view, this.preview, column + 1),
       deleteRow: row => deleteRow(view, this.preview, row),
       deleteColumn: column => deleteColumn(view, this.preview, column),
       deleteTable: () => deleteTable(view, this.preview),
@@ -1730,7 +1735,7 @@ const tableTheme = EditorView.baseTheme({
     left: "50%",
     transform: "translateX(-50%)",
   },
-  ".markra-table-delete-control": {
+  ".markra-table-delete-control, .markra-table-insert-control": {
     transform: "translate(-50%, -50%)",
   },
   ".cm-markra-table": {
