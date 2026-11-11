@@ -204,6 +204,7 @@ function markdownExtension({
   const tableLabels = {
     addColumnLeft: t(language, "editor.table.addColumnLeft"),
     addColumnRight: t(language, "editor.table.addColumnRight"),
+    sortBySequence: t(language, "editor.table.sortBySequence"),
     addRowBelow: t(language, "editor.table.addRowBelow"),
     adjustTable: t(language, "editor.table.adjustTable"),
     alignCenter: t(language, "editor.table.alignCenter"),

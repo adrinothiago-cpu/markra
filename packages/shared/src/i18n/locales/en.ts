@@ -821,6 +821,7 @@ const messages: BaseLocaleMessages = {
   "editor.table.cell": "Cell",
   "editor.table.addColumnRight": "Add column to the right",
   "editor.table.addColumnLeft": "Add column to the left",
+  "editor.table.sortBySequence": "Sort rows by #",
   "editor.table.addRowBelow": "Add row below",
   "editor.table.alignLeft": "Align table left",
   "editor.table.alignCenter": "Align table center",

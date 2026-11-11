@@ -832,6 +832,7 @@ export type I18nKey =
   | "editor.table.cell"
   | "editor.table.addColumnRight"
   | "editor.table.addColumnLeft"
+  | "editor.table.sortBySequence"
   | "editor.table.addRowBelow"
   | "editor.table.alignLeft"
   | "editor.table.alignCenter"

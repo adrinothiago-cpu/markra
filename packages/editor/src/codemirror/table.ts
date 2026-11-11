@@ -15,6 +15,8 @@ import {
   WidgetType,
   type EditorView as CodeMirrorView,
 } from "@codemirror/view";
+import { createLucideIcon } from "@markra/shared";
+import { ArrowDown01 } from "lucide";
 import { createTableControls, defaultTableLabels, type TableControlLabels } from "./table-controls.ts";
 import type { MarkraSourceRange } from "../math-syntax.ts";
 import {
@@ -325,6 +327,37 @@ function addColumn(
   );
   if (changed) focusVisualTableCell(view, preview.from, -1, columnIndex, true, 0);
   return changed;
+}
+
+// A coluna "#" marca a tabela como sequencial: a primeira coluna numera as linhas.
+function tableHasSequenceColumn(preview: TablePreview) {
+  return preview.header[0]?.source.trim() === "#";
+}
+
+function sequenceKey(source: string | undefined) {
+  const text = source?.trim() ?? "";
+  if (!text) return null;
+  const value = Number(text.replace(",", "."));
+  return Number.isFinite(value) ? value : null;
+}
+
+// Ordena as linhas pelo número da coluna "#" (ordem numérica, não alfabética:
+// 2 antes de 10). Linhas sem número vão para o fim, mantendo a ordem entre si.
+function sortTableBySequence(view: CodeMirrorView, preview: TablePreview) {
+  if (!tableHasSequenceColumn(preview)) return false;
+  const values = tableValues(preview);
+  const sorted = values.rows
+    .map((row, index) => ({ index, key: sequenceKey(row[0]), row }))
+    .sort((a, b) => {
+      if (a.key === null || b.key === null) {
+        if (a.key === b.key) return a.index - b.index;
+        return a.key === null ? 1 : -1;
+      }
+      return a.key - b.key || a.index - b.index;
+    })
+    .map((entry) => entry.row);
+  if (sorted.every((row, index) => row === values.rows[index])) return false;
+  return replaceTable(view, preview, values.header, sorted, values.alignments, false);
 }
 
 function alignTable(
@@ -1651,6 +1684,16 @@ class TableWidget extends WidgetType {
       deleteTable: () => deleteTable(view, this.preview),
       cellPosition: cell => ({ row: Number(cell.dataset.tableRow), column: Number(cell.dataset.tableColumn), header: cell.dataset.tableHeader === "true" }),
       focusEditor: () => view.focus(),
+      extras: [
+        {
+          label: this.labels.sortBySequence,
+          action: "sort-sequence",
+          icon: createLucideIcon(document, ArrowDown01, "markra-table-control-icon"),
+          run: () => sortTableBySequence(view, this.preview),
+          enabled: () => this.preview.rows.length > 1,
+          visible: () => tableHasSequenceColumn(this.preview),
+        },
+      ],
     });
     wrapper.addEventListener("copy", (event) => {
       if (!event.clipboardData) return;

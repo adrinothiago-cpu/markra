@@ -7,6 +7,7 @@ export type TableWidthMode = "auto" | "even";
 export interface TableControlLabels {
   addColumnLeft: string;
   addColumnRight: string;
+  sortBySequence: string;
   addRowBelow: string;
   adjustTable: string;
   alignCenter: string;
@@ -24,6 +25,7 @@ export interface TableControlLabels {
 export const defaultTableLabels: TableControlLabels = {
   addColumnLeft: "Add column to the left",
   addColumnRight: "Add column to the right",
+  sortBySequence: "Sort rows by #",
   addRowBelow: "Add row below",
   adjustTable: "Adjust table",
   alignCenter: "Align table center",
@@ -129,6 +131,8 @@ interface ExtraControl {
   action: string;
   run: () => unknown;
   enabled: () => boolean;
+  // Opcional: quando ausente o botão aparece sempre; quando false, fica oculto.
+  visible?: () => boolean;
 }
 export interface TableControlOptions {
   labels: TableControlLabels;
@@ -320,7 +324,11 @@ export function createTableControls(wrapper: HTMLElement, table: HTMLTableElemen
     const alignment = options.alignment();
     for (const button of alignments) button.ariaPressed = String(button.dataset.alignment === alignment);
     width.dataset.mode = options.widthMode(); width.ariaPressed = String(options.widthMode() === "auto");
-    extraButtons.forEach((button, index) => { button.disabled = readonly || !options.extras![index]!.enabled(); });
+    extraButtons.forEach((button, index) => {
+      const extra = options.extras![index]!;
+      button.hidden = extra.visible ? !extra.visible() : false;
+      button.disabled = readonly || !extra.enabled();
+    });
   }
   update();
   return { update, destroy() { picker.close(); wrapper.removeEventListener("mousemove", hover); wrapper.removeEventListener("mouseleave", leave); } };

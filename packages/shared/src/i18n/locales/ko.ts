@@ -466,6 +466,7 @@ const messages: LocaleMessages = {
   "editor.table.cell": "셀",
   "editor.table.addColumnRight": "오른쪽에 열 추가",
   "editor.table.addColumnLeft": "왼쪽에 열 추가",
+  "editor.table.sortBySequence": "#으로 행 정렬",
   "editor.table.addRowBelow": "아래에 행 추가",
   "editor.table.alignLeft": "표 왼쪽 정렬",
   "editor.table.alignCenter": "표 가운데 정렬",

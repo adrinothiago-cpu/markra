@@ -1,4 +1,4 @@
-import { history } from "@codemirror/commands";
+import { history, undo } from "@codemirror/commands";
 import { EditorSelection, EditorState, type Extension } from "@codemirror/state";
 import { EditorView } from "@codemirror/view";
 import { afterEach, describe, expect, it, vi } from "vitest";
@@ -1277,7 +1277,7 @@ describe("tablePreviewPlugin", () => {
       wrapper?.querySelector(".markra-table-scroll > .cm-markra-table"),
     ).not.toBeNull();
     expect(
-      wrapper?.querySelectorAll(".markra-table-align-controls > button"),
+      wrapper?.querySelectorAll(".markra-table-align-controls > button:not([hidden])"),
     ).toHaveLength(5);
     expect(
       wrapper?.querySelectorAll(".markra-table-size-icon-square"),
@@ -2283,6 +2283,42 @@ describe("tablePreviewPlugin", () => {
         ".cm-markra-table thead th:nth-child(2)",
       ),
     );
+  });
+
+  it("sorts rows numerically by a leading # column as one undoable edit", () => {
+    const doc = [
+      "| # | Etapa |",
+      "| --- | --- |",
+      "| 40 | Quarenta |",
+      "| 2 | Dois |",
+      "|  | Sem número |",
+      "| 10 | Dez |",
+      "| 1 | Um |",
+      "",
+      "Edit",
+    ].join("\n");
+    const view = createView(doc, tablePreviewPlugin(), history());
+    const sort = view.dom.querySelector<HTMLButtonElement>('[aria-label="Sort rows by #"]');
+
+    expect(sort?.hidden).toBe(false);
+    expect(sort?.disabled).toBe(false);
+    sort?.click();
+
+    const firstCells = view.state.doc.toString().split("\n").slice(2, 7)
+      .map((line) => line.split("|")[1]?.trim());
+    expect(firstCells).toEqual(["1", "2", "10", "40", ""]);
+    expect(view.state.doc.toString()).toContain("| 40 | Quarenta |");
+
+    expect(undo(view)).toBe(true);
+    expect(view.state.doc.toString()).toBe(doc);
+  });
+
+  it("hides the sort control when the first header is not #", () => {
+    const view = createView(["| Name | Value |", "| --- | --- |", "| B | 2 |", "| A | 1 |"].join("\n"));
+
+    expect(
+      view.dom.querySelector<HTMLButtonElement>('[aria-label="Sort rows by #"]')?.hidden,
+    ).toBe(true);
   });
 
   it("inserts a column before the first one only from the first header", async () => {
