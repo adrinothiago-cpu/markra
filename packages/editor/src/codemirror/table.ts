@@ -7,6 +7,7 @@ import {
   tableCellCaretOffset,
   tableCaretPlaceholder as TABLE_CARET_PLACEHOLDER,
 } from "./table-selection.ts";
+import { redo, undo } from "@codemirror/commands";
 import type { EditorState } from "@codemirror/state";
 import {
   Decoration,
@@ -785,6 +786,55 @@ function handleVisualTableCellEscape(
   view.focus();
 }
 
+type VisualTableHistoryCommand = "redo" | "undo";
+
+// O widget ignora eventos (ignoreEvent), então o keymap de histórico do
+// CodeMirror e o beforeinput historyUndo/historyRedo nunca chegam ao editor
+// quando o foco está numa célula. Encaminha para o histórico do documento.
+function visualTableHistoryCommandFromKey(
+  event: KeyboardEvent,
+): VisualTableHistoryCommand | null {
+  if (event.altKey || !(event.ctrlKey || event.metaKey)) return null;
+  const key = event.key.toLowerCase();
+  if (key === "z") return event.shiftKey ? "redo" : "undo";
+  if (key === "y" && event.ctrlKey && !event.metaKey && !event.shiftKey) {
+    return "redo";
+  }
+  return null;
+}
+
+function runVisualTableHistoryCommand(
+  view: CodeMirrorView,
+  table: HTMLTableElement,
+  command: VisualTableHistoryCommand,
+) {
+  const cell = activeVisualTableCell(view, table);
+  const tableFrom = Number(
+    table.closest<HTMLElement>(".cm-markra-table-wrap")?.dataset.tableFrom,
+  );
+  const rowIndex = Number(cell?.dataset.tableRow);
+  const columnIndex = Number(cell?.dataset.tableColumn);
+  const header = cell?.dataset.tableHeader === "true";
+  const caretOffset = cell ? tableCellCaretOffset(cell) : 0;
+
+  // A sessão guarda o texto original da célula para o Escape; após mexer no
+  // histórico esse texto deixa de corresponder ao documento.
+  tableEditingSessions.delete(view);
+  if (command === "undo") undo(view);
+  else redo(view);
+
+  view.focus();
+  if (
+    cell &&
+    Number.isInteger(tableFrom) &&
+    Number.isInteger(rowIndex) &&
+    Number.isInteger(columnIndex)
+  ) {
+    // Se a tabela mudou de posição ou deixou de existir, o foco fica no editor.
+    focusVisualTableCell(view, tableFrom, rowIndex, columnIndex, header, caretOffset);
+  }
+}
+
 function closestSourceIndex(source: string, value: string, expected: number) {
   let closest = -1;
   let closestDistance = Number.POSITIVE_INFINITY;
@@ -1401,6 +1451,15 @@ class TableWidget extends WidgetType {
     table.dataset.widthMode = widthMode;
     table.classList.toggle("markra-table-width-auto", widthMode === "auto");
     table.addEventListener("keydown", (event) => {
+      const historyCommand = visualTableHistoryCommandFromKey(event);
+      if (historyCommand) {
+        if (view.state.readOnly || event.isComposing || composing) return;
+        // Impede também o undo nativo do contenteditable, que mexeria só no DOM.
+        event.preventDefault();
+        event.stopPropagation();
+        runVisualTableHistoryCommand(view, table, historyCommand);
+        return;
+      }
       if (event.key === "Enter" || event.key === "Escape") {
         const cell = activeVisualTableCell(view, table);
         if (!cell) return;
@@ -1462,6 +1521,21 @@ class TableWidget extends WidgetType {
     // Browsers target editing events at the shared contenteditable table host,
     // so cell-level listeners miss real input even though the cell DOM changes.
     table.addEventListener("beforeinput", (event) => {
+      if (
+        event instanceof InputEvent &&
+        (event.inputType === "historyUndo" || event.inputType === "historyRedo")
+      ) {
+        // Menu Editar → Desfazer/Refazer (execCommand) chega como beforeinput.
+        event.preventDefault();
+        event.stopPropagation();
+        if (view.state.readOnly || composing) return;
+        runVisualTableHistoryCommand(
+          view,
+          table,
+          event.inputType === "historyUndo" ? "undo" : "redo",
+        );
+        return;
+      }
       if (
         event instanceof InputEvent &&
         (event.inputType === "insertLineBreak" ||

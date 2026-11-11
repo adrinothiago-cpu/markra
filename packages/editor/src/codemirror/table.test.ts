@@ -1,3 +1,4 @@
+import { history } from "@codemirror/commands";
 import { EditorSelection, EditorState, type Extension } from "@codemirror/state";
 import { EditorView } from "@codemirror/view";
 import { afterEach, describe, expect, it, vi } from "vitest";
@@ -366,6 +367,85 @@ describe("tablePreviewPlugin", () => {
     expect(formulas[1]?.dataset.markraMathMarkdown).toBe(
       String.raw`\(\mathbf{A}^{\mathsf{T}}\)`,
     );
+    expect(view.state.doc.toString()).toBe(doc);
+  });
+
+  it("routes undo and redo from a focused table cell to the document history", async () => {
+    const doc = [
+      "| Name | Value |",
+      "| --- | --- |",
+      "| Row | Original |",
+      "",
+      "After",
+    ].join("\n");
+    const view = createView(doc, tablePreviewPlugin(), history());
+    const valueCell = () =>
+      view.dom.querySelector<HTMLTableCellElement>(
+        ".cm-markra-table tbody td:nth-child(2)",
+      );
+    const table = () => view.dom.querySelector<HTMLTableElement>(".cm-markra-table");
+
+    valueCell()?.focus();
+    valueCell()!.textContent = "Edited";
+    valueCell()?.dispatchEvent(new InputEvent("input", { bubbles: true }));
+    await Promise.resolve();
+    const edited = view.state.doc.toString();
+    expect(edited).toContain("| Row | Edited |");
+
+    const undoKey = new KeyboardEvent("keydown", {
+      bubbles: true,
+      cancelable: true,
+      ctrlKey: true,
+      key: "z",
+    });
+    table()?.dispatchEvent(undoKey);
+    expect(undoKey.defaultPrevented).toBe(true);
+    expect(view.state.doc.toString()).toBe(doc);
+    await Promise.resolve();
+    expect(view.dom.contains(document.activeElement)).toBe(true);
+
+    const redoKey = new KeyboardEvent("keydown", {
+      bubbles: true,
+      cancelable: true,
+      ctrlKey: true,
+      key: "y",
+    });
+    table()?.dispatchEvent(redoKey);
+    expect(redoKey.defaultPrevented).toBe(true);
+    expect(view.state.doc.toString()).toBe(edited);
+
+    // Menu Editar → Desfazer usa execCommand, que chega como beforeinput.
+    const menuUndo = new InputEvent("beforeinput", {
+      bubbles: true,
+      cancelable: true,
+      inputType: "historyUndo",
+    });
+    table()?.dispatchEvent(menuUndo);
+    expect(menuUndo.defaultPrevented).toBe(true);
+    expect(view.state.doc.toString()).toBe(doc);
+
+    const menuRedo = new InputEvent("beforeinput", {
+      bubbles: true,
+      cancelable: true,
+      inputType: "historyRedo",
+    });
+    table()?.dispatchEvent(menuRedo);
+    expect(view.state.doc.toString()).toBe(edited);
+  });
+
+  it("leaves table history shortcuts inert in read-only documents", () => {
+    const doc = ["| Name |", "| --- |", "| Row |"].join("\n");
+    const view = createView(doc, tablePreviewPlugin(), [
+      history(),
+      EditorState.readOnly.of(true),
+    ]);
+    const undoKey = new KeyboardEvent("keydown", {
+      bubbles: true,
+      cancelable: true,
+      ctrlKey: true,
+      key: "z",
+    });
+    view.dom.querySelector(".cm-markra-table")?.dispatchEvent(undoKey);
     expect(view.state.doc.toString()).toBe(doc);
   });
 
