@@ -3011,8 +3011,15 @@
   .markdown-paper .markra-table-controls-wrapper[data-width-mode="auto"] .markra-table-scroll th,
   .markdown-paper .markra-table-controls-wrapper[data-width-mode="auto"] .markra-table-scroll td {
     max-width: 32rem;
-    overflow-wrap: anywhere;
+    /* break-word não reduz a largura mínima da coluna: "40" não vira "4/0".
+       Código e links, que costumam ser longos, continuam quebrando livremente. */
+    overflow-wrap: break-word;
     word-break: normal;
+  }
+
+  .markdown-paper .markra-table-controls-wrapper[data-width-mode="auto"] .markra-table-scroll th :is(code, a),
+  .markdown-paper .markra-table-controls-wrapper[data-width-mode="auto"] .markra-table-scroll td :is(code, a) {
+    overflow-wrap: anywhere;
   }
 
   .markdown-paper th {
