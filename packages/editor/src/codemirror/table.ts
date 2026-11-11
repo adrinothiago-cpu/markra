@@ -1645,7 +1645,7 @@ class TableWidget extends WidgetType {
       },
       addRow: () => addRow(view, this.preview),
       addColumn: () => addColumn(view, this.preview),
-      insertColumnAfter: column => addColumn(view, this.preview, column + 1),
+      insertColumnAt: index => addColumn(view, this.preview, index),
       deleteRow: row => deleteRow(view, this.preview, row),
       deleteColumn: column => deleteColumn(view, this.preview, column),
       deleteTable: () => deleteTable(view, this.preview),

@@ -5,6 +5,7 @@ export type TableAlignment = "left" | "center" | "right" | null;
 export type TableWidthMode = "auto" | "even";
 
 export interface TableControlLabels {
+  addColumnLeft: string;
   addColumnRight: string;
   addRowBelow: string;
   adjustTable: string;
@@ -21,6 +22,7 @@ export interface TableControlLabels {
 }
 
 export const defaultTableLabels: TableControlLabels = {
+  addColumnLeft: "Add column to the left",
   addColumnRight: "Add column to the right",
   addRowBelow: "Add row below",
   adjustTable: "Adjust table",
@@ -139,9 +141,10 @@ export interface TableControlOptions {
   setWidthMode: (mode: TableWidthMode) => unknown;
   addRow: () => unknown;
   addColumn: () => unknown;
-  // Opcional: tabelas que suportam inserir coluna no meio mostram um "+"
-  // na borda direita da coluna sob o mouse, no mesmo padrão do "−".
-  insertColumnAfter?: (index: number) => unknown;
+  // Opcional: tabelas que suportam inserir coluna em qualquer posição mostram
+  // um "+" na borda direita do cabeçalho sob o mouse e, na primeira coluna,
+  // também na borda esquerda, no mesmo padrão do "−".
+  insertColumnAt?: (index: number) => unknown;
   deleteRow: (index: number) => unknown;
   deleteColumn: (index: number) => unknown;
   deleteTable: () => unknown;
@@ -261,13 +264,16 @@ export function createTableControls(wrapper: HTMLElement, table: HTMLTableElemen
   let hoveredColumn = 0, hoveredRow = 0;
   const deleteColumn = createTableControl(document, "markra-table-delete-control markra-table-delete-column", options.labels.deleteColumn, () => options.deleteColumn(hoveredColumn), createLucideIcon(document, Minus, "markra-table-control-icon"));
   const deleteRow = createTableControl(document, "markra-table-delete-control markra-table-delete-row", options.labels.deleteRow, () => options.deleteRow(hoveredRow), createLucideIcon(document, Minus, "markra-table-control-icon"));
-  const insertColumn = options.insertColumnAfter
-    ? createTableControl(document, "markra-table-insert-control markra-table-insert-column", options.labels.addColumnRight, () => options.insertColumnAfter?.(hoveredColumn), createLucideIcon(document, Plus, "markra-table-control-icon"))
+  const insertColumn = options.insertColumnAt
+    ? createTableControl(document, "markra-table-insert-control markra-table-insert-column", options.labels.addColumnRight, () => options.insertColumnAt?.(hoveredColumn + 1), createLucideIcon(document, Plus, "markra-table-control-icon"))
     : null;
+  const insertFirstColumn = options.insertColumnAt
+    ? createTableControl(document, "markra-table-insert-control markra-table-insert-first-column", options.labels.addColumnLeft, () => options.insertColumnAt?.(0), createLucideIcon(document, Plus, "markra-table-control-icon"))
+    : null;
+  const insertControls = [insertColumn, insertFirstColumn].filter((button): button is HTMLButtonElement => button !== null);
   deleteColumn.hidden = true; deleteRow.hidden = true;
-  if (insertColumn) insertColumn.hidden = true;
-  wrapper.prepend(toolbar); wrapper.append(column, row, deleteColumn, deleteRow);
-  if (insertColumn) wrapper.append(insertColumn);
+  for (const button of insertControls) button.hidden = true;
+  wrapper.prepend(toolbar); wrapper.append(column, row, deleteColumn, deleteRow, ...insertControls);
   const hover = (event: MouseEvent) => {
     const cell = event.target instanceof Element ? event.target.closest<HTMLTableCellElement>("th, td") : null;
     if (!cell || cell.closest("table") !== table) return;
@@ -284,11 +290,18 @@ export function createTableControls(wrapper: HTMLElement, table: HTMLTableElemen
         insertColumn.style.left = `${rect.right - bounds.left}px`;
         insertColumn.style.top = `${rect.top - bounds.top}px`;
       }
+      if (insertFirstColumn) {
+        // Só a primeira coluna tem borda esquerda sem vizinha; nas demais,
+        // o "+" da direita da coluna anterior já cobre essa posição.
+        insertFirstColumn.hidden = position.column !== 0;
+        insertFirstColumn.style.left = `${rect.left - bounds.left}px`;
+        insertFirstColumn.style.top = `${rect.top - bounds.top}px`;
+      }
     } else {
       hoveredRow = position.row;
       const rect = cell.parentElement!.getBoundingClientRect();
       deleteColumn.hidden = true; deleteRow.hidden = false;
-      if (insertColumn) insertColumn.hidden = true;
+      for (const button of insertControls) button.hidden = true;
       const visibleRight = wrapper.querySelector(".markra-table-scroll")?.getBoundingClientRect().right ?? rect.right;
       deleteRow.style.left = `${Math.min(rect.right, visibleRight) - bounds.left}px`;
       deleteRow.style.top = `${rect.top - bounds.top + rect.height / 2}px`;
@@ -296,13 +309,13 @@ export function createTableControls(wrapper: HTMLElement, table: HTMLTableElemen
   };
   const leave = () => {
     deleteColumn.hidden = true; deleteRow.hidden = true;
-    if (insertColumn) insertColumn.hidden = true;
+    for (const button of insertControls) button.hidden = true;
   };
   wrapper.addEventListener("mousemove", hover); wrapper.addEventListener("mouseleave", leave);
   function update() {
     const readonly = options.readOnly();
     for (const button of [size, ...alignments, width, remove, column, row, deleteColumn, deleteRow]) button.disabled = readonly;
-    if (insertColumn) insertColumn.disabled = readonly;
+    for (const button of insertControls) button.disabled = readonly;
     deleteColumn.disabled ||= options.shape().columns <= 1;
     const alignment = options.alignment();
     for (const button of alignments) button.ariaPressed = String(button.dataset.alignment === alignment);

@@ -474,6 +474,7 @@ const messages: LocaleMessages = {
   "editor.table.resizeColumn": "調整欄寬",
   "editor.table.cell": "儲存格",
   "editor.table.addColumnRight": "在右側新增欄",
+  "editor.table.addColumnLeft": "在左側新增欄",
   "editor.table.addRowBelow": "在下方新增列",
   "editor.table.alignLeft": "表格靠左對齊",
   "editor.table.alignCenter": "表格置中對齊",

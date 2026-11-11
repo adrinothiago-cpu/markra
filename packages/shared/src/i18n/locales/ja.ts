@@ -474,6 +474,7 @@ const messages: LocaleMessages = {
   "editor.table.resizeColumn": "列幅を変更",
   "editor.table.cell": "セル",
   "editor.table.addColumnRight": "右に列を追加",
+  "editor.table.addColumnLeft": "左に列を追加",
   "editor.table.addRowBelow": "下に行を追加",
   "editor.table.alignLeft": "表を左揃え",
   "editor.table.alignCenter": "表を中央揃え",

@@ -820,6 +820,7 @@ const messages: LocaleMessages = {
   "editor.table.resizeColumn": "调整列宽",
   "editor.table.cell": "单元格",
   "editor.table.addColumnRight": "在右侧新增列",
+  "editor.table.addColumnLeft": "在左侧新增列",
   "editor.table.addRowBelow": "在下方新增行",
   "editor.table.alignLeft": "表格左对齐",
   "editor.table.alignCenter": "表格居中对齐",

@@ -465,6 +465,7 @@ const messages: LocaleMessages = {
   "editor.table.resizeColumn": "Spaltenbreite ändern",
   "editor.table.cell": "Zelle",
   "editor.table.addColumnRight": "Spalte rechts hinzufügen",
+  "editor.table.addColumnLeft": "Spalte links hinzufügen",
   "editor.table.addRowBelow": "Zeile darunter hinzufügen",
   "editor.table.alignLeft": "Tabelle links ausrichten",
   "editor.table.alignCenter": "Tabelle zentriert ausrichten",

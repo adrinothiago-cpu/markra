@@ -465,6 +465,7 @@ const messages: LocaleMessages = {
   "editor.table.resizeColumn": "Изменить ширину столбца",
   "editor.table.cell": "Ячейка",
   "editor.table.addColumnRight": "Добавить столбец справа",
+  "editor.table.addColumnLeft": "Добавить столбец слева",
   "editor.table.addRowBelow": "Добавить строку ниже",
   "editor.table.alignLeft": "Выровнять таблицу по левому краю",
   "editor.table.alignCenter": "Выровнять таблицу по центру",

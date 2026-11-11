@@ -2285,6 +2285,45 @@ describe("tablePreviewPlugin", () => {
     );
   });
 
+  it("inserts a column before the first one only from the first header", async () => {
+    const doc = [
+      "| Name | Value |",
+      "| --- | --- |",
+      "| Alpha | 1 |",
+      "",
+      "Edit",
+    ].join("\n");
+    const view = createView(doc);
+    const insertFirst = () =>
+      view.dom.querySelector<HTMLButtonElement>(".markra-table-insert-first-column");
+    const hoverHeader = (index: number) =>
+      view.dom.querySelector<HTMLTableCellElement>(
+        `.cm-markra-table th:nth-child(${index})`,
+      )?.dispatchEvent(new MouseEvent("mousemove", { bubbles: true }));
+
+    expect(insertFirst()?.hidden).toBe(true);
+    hoverHeader(2);
+    expect(insertFirst()?.hidden).toBe(true);
+    hoverHeader(1);
+    expect(insertFirst()?.hidden).toBe(false);
+    expect(insertFirst()?.getAttribute("aria-label")).toBe("Add column to the left");
+
+    insertFirst()?.click();
+    await Promise.resolve();
+
+    const lines = view.state.doc.toString().split("\n");
+    expect(lines.slice(0, 3).map((line) => line.split("|").map((cell) => cell.trim()))).toEqual([
+      ["", "", "Name", "Value", ""],
+      ["", "---", "---", "---", ""],
+      ["", "", "Alpha", "1", ""],
+    ]);
+    expect(document.activeElement).toBe(
+      view.dom.querySelector<HTMLTableCellElement>(
+        ".cm-markra-table thead th:first-child",
+      ),
+    );
+  });
+
   it("deletes a selected preview row or column and focuses a nearby visual cell", async () => {
     const doc = [
       "| Name | Value | Extra |",

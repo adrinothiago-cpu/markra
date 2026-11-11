@@ -202,6 +202,7 @@ function markdownExtension({
   };
 
   const tableLabels = {
+    addColumnLeft: t(language, "editor.table.addColumnLeft"),
     addColumnRight: t(language, "editor.table.addColumnRight"),
     addRowBelow: t(language, "editor.table.addRowBelow"),
     adjustTable: t(language, "editor.table.adjustTable"),

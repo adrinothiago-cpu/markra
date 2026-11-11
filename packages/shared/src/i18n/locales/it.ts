@@ -465,6 +465,7 @@ const messages: LocaleMessages = {
   "editor.table.resizeColumn": "Ridimensiona colonna",
   "editor.table.cell": "Cella",
   "editor.table.addColumnRight": "Aggiungi colonna a destra",
+  "editor.table.addColumnLeft": "Aggiungi colonna a sinistra",
   "editor.table.addRowBelow": "Aggiungi riga sotto",
   "editor.table.alignLeft": "Allinea tabella a sinistra",
   "editor.table.alignCenter": "Allinea tabella al centro",
